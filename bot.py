@@ -9,6 +9,55 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from rules import RULES, RULES_INTRO, RULES_TITLE
 
+class EmbedHelp(commands.HelpCommand):
+    """A !help command that replies with an embed instead of plain text."""
+
+    async def send_bot_help(self, mapping):
+        """!help on its own: every command, grouped by category."""
+        bot = self.context.bot
+        prefix = self.context.clean_prefix
+        available = {command.name: command for command in bot.commands if not command.hidden}
+
+        embed = discord.Embed(
+            title=f"{bot.user.name} commands",
+            description=f"Use `{prefix}help <command>` for more detail on one command.",
+            colour=EMBED_COLOUR,
+        )
+        listed = set()
+        for category, names in HELP_CATEGORIES.items():
+            lines = []
+            for name in names:
+                command = available.get(name)
+                if command:
+                    lines.append(self.describe(command, prefix))
+                    listed.add(name)
+            if lines:
+                embed.add_field(name=category, value="\n".join(lines), inline=False)
+
+        # any command not in HELP_CATEGORIES goes here, so new commands never go missing
+        others = [self.describe(command, prefix) for name, command in sorted(available.items()) if name not in listed]
+        if others:
+            embed.add_field(name="Other", value="\n".join(others), inline=False)
+
+        embed.set_thumbnail(url=bot.user.display_avatar.url)
+        await self.get_destination().send(embed=embed)
+
+    async def send_command_help(self, command):
+        """!help <command>: the full description of one command."""
+        prefix = self.context.clean_prefix
+        usage = f"{prefix}{command.qualified_name} {command.signature}".strip()
+        embed = discord.Embed(title=usage, description=command.help or "No description yet.", colour=EMBED_COLOUR)
+        await self.get_destination().send(embed=embed)
+
+    async def send_error_message(self, error):
+        """!help <something that isn't a command>."""
+        await self.get_destination().send(error)
+
+    @staticmethod
+    def describe(command, prefix):
+        """One line for the list: `!rule <number>` - Show one rule by its number..."""
+        usage = f"{prefix}{command.name} {command.signature}".strip()
+        return f"`{usage}` - {command.short_doc or 'No description yet.'}"
 
 load_dotenv()  # reads DISCORD_TOKEN from your .env file
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -22,8 +71,21 @@ BANNER_PATH = Path(__file__).parent / "assets" / "rules_banner.webp"
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents,
+    help_command=EmbedHelp(command_attrs={"help": "Show this list, or details about one command."}),
+)
 start_time = datetime.now(timezone.utc)  # remembered so we can work out the uptime
+
+# which commands appear under which heading in !help
+# a command that isn't listed here still shows up, under "Other"
+HELP_CATEGORIES = {
+    "General": ["ping", "info", "help"],
+    "Members": ["userinfo", "avatar"],
+    "Rules": ["rules", "rule"],
+}
+
 
 def latency_ms():
     """The bot's delay to Discord as text, like '42 ms'."""
@@ -62,6 +124,8 @@ async def on_command_error(ctx, error):
         await ctx.send("That command only works inside a server.")
     elif isinstance(error, commands.MemberNotFound):
         await ctx.send("I couldn't find that member.")
+    elif isinstance(error, (commands.BadArgument, commands.MissingRequiredArgument)):
+        await ctx.send(f"I couldn't understand that. Try `!help {ctx.command}` to see how to use it.")
     else:
         print(f"Error in !{ctx.command}: {error}")
         await ctx.send("Something went wrong with that command.")
