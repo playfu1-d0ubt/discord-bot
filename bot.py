@@ -67,6 +67,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 BOT_DESCRIPTION = "A small bot built with Python and discord.py."
 EMBED_COLOUR = discord.Colour.red()
 BANNER_PATH = Path(__file__).parent / "assets" / "rules_banner.webp"
+MAX_DICE = 10  # the most dice !roll will roll at once
 
 # intents say which events the bot wants to hear about
 # message_content lets it read the text of messages, so it can see "!ping"
@@ -219,19 +220,25 @@ async def rule(ctx, number: int):
     await ctx.send(embed=embed)
 
 @bot.command()
-async def roll(ctx):
-    """Roll two dice and see the total."""
-    die1 = random.randint(1, 6)
-    die2 = random.randint(1, 6)
+async def roll(ctx, dice: int = 2):
+    """Roll dice (2 by default) and see the total, like: !roll 3"""
+    if not 1 <= dice <= MAX_DICE:
+        await ctx.send(f"I can roll between 1 and {MAX_DICE} dice.")
+        return
+
+    rolls = []
+    for _ in range(dice):
+        rolls.append(random.randint(1, 6))
 
     embed = discord.Embed(
         title="Dice roll",
-        description=f"**{die1}** and **{die2}**",
+        description=", ".join(f"**{number}**" for number in rolls),
         colour=EMBED_COLOUR,
     )
-    embed.add_field(name="Total", value=str(die1 + die2))
-    if die1 == die2:
-        embed.add_field(name="Bonus", value="DOUBLE!")
+    embed.add_field(name="Total", value=str(sum(rolls)))
+    # a set removes repeats, so a set with only one item means every die matched
+    if dice >= 2 and len(set(rolls)) == 1:
+        embed.add_field(name="Bonus", value="DOUBLE!" if dice == 2 else "ALL THE SAME!")
     embed.set_footer(text=f"Rolled by {ctx.author.display_name}")
     await ctx.send(embed=embed)
 
