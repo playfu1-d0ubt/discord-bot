@@ -1,15 +1,39 @@
+"""A small Discord bot built with discord.py.
+
+Commands: !ping, !info, !userinfo, !avatar, !rules, !rule, !roll and !help.
+Run it with:  python bot.py   (it needs DISCORD_TOKEN in a .env file)
+"""
 import math
 import os
 import random
 import sys
-
 from datetime import datetime, timezone
 from pathlib import Path
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+
 from rules import RULES, RULES_INTRO, RULES_TITLE
+
+# ---------------------------------------------------------------- settings
+
+load_dotenv()  # reads DISCORD_TOKEN from your .env file
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+BOT_DESCRIPTION = "A small bot built with Python and discord.py."
+EMBED_COLOUR = discord.Colour.red()
+BANNER_PATH = Path(__file__).parent / "assets" / "rules_banner.webp"  # shown by !rules (optional)
+MAX_DICE = 10  # the most dice !roll will roll at once
+
+# which commands appear under which heading in !help
+# a command that isn't listed here still shows up, under "Other"
+HELP_CATEGORIES = {
+    "General": ["ping", "info", "help"],
+    "Members": ["userinfo", "avatar"],
+    "Rules": ["rules", "rule"],
+    "Fun": ["roll"],
+}
 
 class EmbedHelp(commands.HelpCommand):
     """A !help command that replies with an embed instead of plain text."""
@@ -61,13 +85,7 @@ class EmbedHelp(commands.HelpCommand):
         usage = f"{prefix}{command.name} {command.signature}".strip()
         return f"`{usage}` - {command.short_doc or 'No description yet.'}"
 
-load_dotenv()  # reads DISCORD_TOKEN from your .env file
-TOKEN = os.getenv("DISCORD_TOKEN")
-
-BOT_DESCRIPTION = "A small bot built with Python and discord.py."
-EMBED_COLOUR = discord.Colour.red()
-BANNER_PATH = Path(__file__).parent / "assets" / "rules_banner.webp"
-MAX_DICE = 10  # the most dice !roll will roll at once
+# ---------------------------------------------------------------- bot setup
 
 # intents say which events the bot wants to hear about
 # message_content lets it read the text of messages, so it can see "!ping"
@@ -81,15 +99,7 @@ bot = commands.Bot(
 )
 start_time = datetime.now(timezone.utc)  # remembered so we can work out the uptime
 
-# which commands appear under which heading in !help
-# a command that isn't listed here still shows up, under "Other"
-HELP_CATEGORIES = {
-    "General": ["ping", "info", "help"],
-    "Members": ["userinfo", "avatar"],
-    "Rules": ["rules", "rule"],
-    "Fun": ["roll"],
-}
-
+# ---------------------------------------------------------------- helper functions
 
 def latency_ms():
     """The bot's delay to Discord as text, like '42 ms'."""
@@ -97,7 +107,6 @@ def latency_ms():
     if math.isnan(latency):  # happens if we ask before the bot has fully connected
         return "unknown"
     return f"{round(latency * 1000)} ms"
-
 
 def format_uptime():
     """Turn the time since the bot started into text like '2h 5m 10s'."""
@@ -114,6 +123,8 @@ def format_uptime():
         parts.append(f"{minutes}m")
     parts.append(f"{seconds}s")
     return " ".join(parts)
+
+# ---------------------------------------------------------------- events
 
 @bot.event
 async def on_ready():
@@ -134,6 +145,7 @@ async def on_command_error(ctx, error):
         print(f"Error in !{ctx.command}: {error}")
         await ctx.send("Something went wrong with that command.")
 
+# ---------------------------------------------------------------- commands
 
 @bot.command()
 async def ping(ctx):
@@ -164,6 +176,7 @@ async def info(ctx):
             f"Members: {guild.member_count}\n"
             f"Channels: {len(guild.text_channels)} text, {len(guild.voice_channels)} voice\n"
             f"Created: {discord.utils.format_dt(guild.created_at, 'D')}"
+            
         ),
         inline=False,
     )
@@ -185,7 +198,6 @@ async def userinfo(ctx, member: discord.Member = None):
     embed.add_field(name="Joined the server", value=joined, inline=False)
     embed.add_field(name="Account created", value=discord.utils.format_dt(member.created_at, "D"), inline=False)
     await ctx.send(embed=embed)
-
 
 @bot.command()
 async def avatar(ctx, member: discord.Member = None):
@@ -209,7 +221,6 @@ async def rules(ctx):
     else:
         await ctx.send(embed=embed)
 
-
 @bot.command()
 async def rule(ctx, number: int):
     """Show one rule by its number, like: !rule 2"""
@@ -230,6 +241,7 @@ async def roll(ctx, dice: int = 2):
     for _ in range(dice):
         rolls.append(random.randint(1, 6))
 
+
     embed = discord.Embed(
         title="Dice roll",
         description=", ".join(f"**{number}**" for number in rolls),
@@ -239,8 +251,11 @@ async def roll(ctx, dice: int = 2):
     # a set removes repeats, so a set with only one item means every die matched
     if dice >= 2 and len(set(rolls)) == 1:
         embed.add_field(name="Bonus", value="DOUBLE!" if dice == 2 else "ALL THE SAME!")
+
     embed.set_footer(text=f"Rolled by {ctx.author.display_name}")
     await ctx.send(embed=embed)
+
+# ---------------------------------------------------------------- main
 
 def main():
     if not TOKEN:
