@@ -1,3 +1,8 @@
+"""The server rules. Edit the text here and bot.py does the rest.
+
+Each rule is one string in the RULES list. The bot numbers them for you
+(Law 1, Law 2, ...) and Discord turns [text](link) into a clickable link.
+"""
 RULES_TITLE = "Rules of Oath"
 RULES_INTRO = "To keep your citizenship in the server you must obey these laws."
 
