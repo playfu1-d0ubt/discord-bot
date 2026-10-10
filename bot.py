@@ -2,16 +2,20 @@ import math
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from rules import RULES, RULES_INTRO, RULES_TITLE
+
 
 load_dotenv()  # reads DISCORD_TOKEN from your .env file
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 BOT_DESCRIPTION = "A small bot built with Python and discord.py."
-EMBED_COLOUR = discord.Colour.green()
+EMBED_COLOUR = discord.Colour.red()
+BANNER_PATH = Path(__file__).parent / "assets" / "rules_banner.webp"
 
 # intents say which events the bot wants to hear about
 # message_content lets it read the text of messages, so it can see "!ping"
@@ -121,6 +125,30 @@ async def avatar(ctx, member: discord.Member = None):
     member = member or ctx.author
     embed = discord.Embed(title=f"{member.display_name}'s avatar", colour=EMBED_COLOUR)
     embed.set_image(url=member.display_avatar.url)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def rules(ctx):
+    """Show all the server rules."""
+    embed = discord.Embed(title=RULES_TITLE, description=RULES_INTRO, colour=EMBED_COLOUR)
+    for number, text in enumerate(RULES, start=1):
+        embed.add_field(name=f"Law {number}", value=text, inline=False)
+    if BANNER_PATH.exists():
+        # attach the picture, then point the embed at the attachment
+        banner = discord.File(BANNER_PATH, filename=BANNER_PATH.name)
+        embed.set_image(url=f"attachment://{BANNER_PATH.name}")
+        await ctx.send(embed=embed, file=banner)
+    else:
+        await ctx.send(embed=embed)
+
+
+@bot.command()
+async def rule(ctx, number: int):
+    """Show one rule by its number, like: !rule 2"""
+    if not 1 <= number <= len(RULES):
+        await ctx.send(f"There's no law {number}. Pick a number from 1 to {len(RULES)}.")
+        return
+    embed = discord.Embed(title=f"Law {number}", description=RULES[number - 1], colour=EMBED_COLOUR)
     await ctx.send(embed=embed)
 
 def main():
