@@ -1,6 +1,8 @@
 import math
 import os
+import random
 import sys
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -84,6 +86,7 @@ HELP_CATEGORIES = {
     "General": ["ping", "info", "help"],
     "Members": ["userinfo", "avatar"],
     "Rules": ["rules", "rule"],
+    "Fun": ["roll"],
 }
 
 
@@ -215,6 +218,23 @@ async def rule(ctx, number: int):
     embed = discord.Embed(title=f"Law {number}", description=RULES[number - 1], colour=EMBED_COLOUR)
     await ctx.send(embed=embed)
 
+@bot.command()
+async def roll(ctx):
+    """Roll two dice and see the total."""
+    die1 = random.randint(1, 6)
+    die2 = random.randint(1, 6)
+
+    embed = discord.Embed(
+        title="Dice roll",
+        description=f"**{die1}** and **{die2}**",
+        colour=EMBED_COLOUR,
+    )
+    embed.add_field(name="Total", value=str(die1 + die2))
+    if die1 == die2:
+        embed.add_field(name="Bonus", value="DOUBLE!")
+    embed.set_footer(text=f"Rolled by {ctx.author.display_name}")
+    await ctx.send(embed=embed)
+
 def main():
     if not TOKEN:
         sys.exit("Error: DISCORD_TOKEN not found. Add it to your .env file.")
@@ -224,7 +244,6 @@ def main():
         sys.exit("Error: Discord rejected the token. Check DISCORD_TOKEN in .env (you may need to reset it).")
     except discord.PrivilegedIntentsRequired:
         sys.exit("Error: turn on 'Message Content Intent' on the Bot tab in the Discord Developer Portal.")
-
 
 if __name__ == "__main__":
     main()
