@@ -2,7 +2,7 @@
 
 A Discord bot written in Python with [discord.py](https://discordpy.readthedocs.io/). It shows information about the server and its members, posts the server rules, rolls dice, and has a help command that replies with a tidy embed.
 
-It's a rebuild of an earlier bot of mine, with more commands, input checking and friendly error messages.
+It's a rebuild of an earlier now lost bot of mine called Elibot, with more commands, input checking and friendly error messages.
 
 ## Commands
 
