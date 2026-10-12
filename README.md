@@ -4,7 +4,7 @@ A Discord bot written in Python with [discord.py](https://discordpy.readthedocs.
 
 It's a rebuild of an earlier now lost bot of mine called Elibot, with more commands, input checking and friendly error messages.
 
-## Commands
+## What it does
 
 All commands start with `!`.
 
@@ -22,7 +22,38 @@ All commands start with `!`.
 
 `!info` and `!userinfo` only work inside a server. If a command is used wrongly, the bot replies with a message pointing to `!help` instead of failing silently.
 
-## Setup
+### Screenshots
+
+![The help command](screenshots/help.png)
+![Server and bot info](screenshots/info.png)
+![The server rules](screenshots/rules.png)
+![A dice roll](screenshots/roll.png)
+
+### Customising it
+
+| What to change | Where |
+| --- | --- |
+| The server rules, their title and the intro line | `rules.py` |
+| The banner picture shown with `!rules` | `assets/rules_banner.webp` (if the file is missing, the rules are sent without a picture) |
+| The embed colour, the bot description, the most dice `!roll` allows | The settings at the top of `bot.py` |
+| Which commands appear under which heading in `!help` | `HELP_CATEGORIES` in `bot.py` |
+
+A new command that isn't listed in `HELP_CATEGORIES` still appears in `!help`, under "Other".
+
+### Project layout
+
+```
+discord-bot/
+├── bot.py            # the bot and all of its commands
+├── rules.py          # the rules text
+├── assets/           # the banner picture for !rules
+├── screenshots/      # screenshots of the bot working, for this README
+├── .env.example      # shows what goes in your .env file
+├── LICENSE           # MIT licence
+└── requirements.txt  # the packages to install
+```
+
+## How to run
 
 You need Python 3 and a Discord account.
 
@@ -55,44 +86,23 @@ The terminal prints `Logged in as <bot name>` and the bot appears online. Type `
 
 **Keep the token private.** `.env` is listed in `.gitignore` so it isn't uploaded. If the token ever leaks, reset it on the Bot tab and the old one stops working.
 
-## Screenshots
-
-![The help command](screenshots/help.png)
-![Server and bot info](screenshots/info.png)
-![The server rules](screenshots/rules.png)
-![A dice roll](screenshots/roll.png)
-
-## Customising it
-
-| What to change | Where |
-| --- | --- |
-| The server rules, their title and the intro line | `rules.py` |
-| The banner picture shown with `!rules` | `assets/rules_banner.webp` (if the file is missing, the rules are sent without a picture) |
-| The embed colour, the bot description, the most dice `!roll` allows | The settings at the top of `bot.py` |
-| Which commands appear under which heading in `!help` | `HELP_CATEGORIES` in `bot.py` |
-
-A new command that isn't listed in `HELP_CATEGORIES` still appears in `!help`, under "Other".
-
-## Project layout
-
-```
-discord-bot/
-├── bot.py            # the bot and all of its commands
-├── rules.py          # the rules text
-├── assets/           # the banner picture for !rules
-├── screenshots       # screenshots of bot working for README
-├── .env.example      # shows what goes in your .env file
-└── requirements.txt  # the packages to install
-```
-
 ## Limitations
 
 - The bot runs on your own computer, so it's only online while `bot.py` is running.
 - It uses `!` commands, which need the Message Content intent. Discord's newer slash commands (`/help`) aren't added yet.
 - Everything is held in the code and files. There's no database, so nothing is remembered between runs.
+- Errors and command use aren't logged to a file yet.
+- No automated tests.
 
-## Ideas for later
+## What I learned
+
+**What I practised:** `async` and `await`, building a bot with discord.py, making embeds, keeping a secret token out of Git with a `.env` file, and writing friendly error messages.
+
+**Rebuilding Elibot:** my old bot was lost with a wiped account, so I rebuilt it from scratch and added more commands, input checking and a help command.
+
+**Ideas for later:**
 
 - Slash commands as well as `!` commands
 - Hosting it so it stays online all the time
+- Splitting the commands into cogs
 - More commands, like a poll or a reminder
